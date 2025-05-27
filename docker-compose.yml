@@ -1,0 +1,141 @@
+# Docker Compose の設定ファイルバージョンを指定します。
+# この行は通常ファイルの先頭に記述されますが、与えられたスニペットには含まれていませんでした。
+# version: "3.8" # 例: Docker Composeのバージョン
+
+version: "3.8"
+
+# サービス（アプリケーションを構成する各コンテナ）を定義します。
+services:
+  # バックエンドアプリケーションのサービス定義
+  backend:
+    # Dockerイメージをビルドするための設定
+    build:
+      # Dockerfileが存在するディレクトリのパスを指定します。
+      # この場合は、docker-compose.yml と同じ階層にある backend ディレクトリを指します。
+      context: ./backend
+      # ビルドに使用するDockerfileの名前を指定します。
+      dockerfile: Dockerfile
+    # コンテナに付ける名前を定義します。
+    container_name: todo-backend
+    # ホストマシンとコンテナ間のポートマッピングを設定します。
+    # "ホスト側ポート:コンテナ側ポート" の形式で記述します。
+    # この設定により、ホストマシンの8080番ポートへのアクセスが、コンテナ内の8080番ポートに転送されます。
+    ports:
+      - "8080:8080"
+    # コンテナ内で使用する環境変数を設定します。
+    environment:
+      # Spring Bootアプリケーションがデータベースに接続するためのURLです。
+      # "db" は後述するデータベースサービスのホスト名を指します。
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/tododb
+      # データベース接続に使用するユーザー名です。
+      - SPRING_DATASOURCE_USERNAME=user
+      # データベース接続に使用するパスワードです。
+      - SPRING_DATASOURCE_PASSWORD=password
+      # 開発時にSpring Boot DevToolsを使用してホットリロード（コード変更時の自動再起動）を有効にする場合の設定です。
+      # 現在はコメントアウトされています。
+      # - SPRING_DEVTOOLS_RESTART_ENABLED=true
+    # ホストマシンとコンテナ間でディレクトリやファイルを共有（マウント）するための設定です。
+    # "ホスト側パス:コンテナ側パス" の形式で記述します。
+    # この設定により、ホストの ./backend/src ディレクトリへの変更が、コンテナ内の /app/src に即座に反映されます。
+    # これにより、開発中にコードを修正した際に、コンテナを再ビルドすることなく変更を適用できます。
+    volumes:
+      - ./backend/src:/app/src
+    # このサービスが依存する他のサービスを指定します。
+    # ここでは "db" サービスを指定しており、backendサービスはdbサービスが起動した後に起動します。
+    depends_on:
+      - db
+    # このサービスが接続するネットワークを指定します。
+    # 後述する todo-app-network という名前のカスタムネットワークに接続します。
+    networks:
+      - todo-app-network
+
+  # フロントエンドアプリケーションのサービス定義
+  frontend:
+    # Dockerイメージをビルドするための設定
+    build:
+      # Dockerfileが存在するディレクトリのパスを指定します。
+      context: ./frontend
+      # ビルドに使用するDockerfileの名前を指定します。
+      dockerfile: Dockerfile
+    # コンテナに付ける名前を定義します。
+    container_name: todo-frontend
+    # ホストマシンとコンテナ間のポートマッピングを設定します。
+    # この設定により、ホストマシンの5173番ポートへのアクセスが、コンテナ内の80番ポートに転送されます。
+    # フロントエンドの開発サーバーがコンテナの80番ポートで動作していることを想定しています。
+    ports:
+      - "5173:80"
+    # ホストマシンとコンテナ間でディレクトリやファイルを共有（マウント）するための設定です。
+    # ホストの ./frontend/src ディレクトリをコンテナの /app/src に、
+    # ホストの ./frontend/public ディレクトリをコンテナの /app/public にマウントします。
+    # これにより、ソースコードや公開ファイルの変更がコンテナに即座に反映されます。
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    # このサービスが依存する他のサービスを指定します。
+    # ここでは "backend" サービスを指定しており、frontendサービスはbackendサービスが起動した後に起動します。
+    depends_on:
+      - backend
+    # このサービスが接続するネットワークを指定します。
+    networks:
+      - todo-app-network
+
+  # データベース(PostgreSQL)のサービス定義
+  db:
+    # 使用するDockerイメージを指定します。
+    # ここでは、軽量なAlpine LinuxベースのPostgreSQL 15のイメージを使用します。
+    image: postgres:15-alpine
+    # コンテナに付ける名前を定義します。
+    container_name: todo-db
+    # ホストマシンとコンテナ間のポートマッピングを設定します。
+    # PostgreSQLのデフォルトポートである5432番をマッピングします。
+    ports:
+      - "5432:5432"
+    # コンテナ内で使用する環境変数を設定します。これらはPostgreSQLイメージが初期設定に使用します。
+    environment:
+      # PostgreSQLデータベースの管理者ユーザー名を指定します。
+      # backendサービスのSPRING_DATASOURCE_USERNAMEと一致させる必要があります。
+      POSTGRES_USER: user
+      # PostgreSQLデータベースの管理者パスワードを指定します。
+      # backendサービスのSPRING_DATASOURCE_PASSWORDと一致させる必要があります。
+      POSTGRES_PASSWORD: password
+      # コンテナ起動時に作成されるデータベース名を指定します。
+      # backendサービスのSPRING_DATASOURCE_URL内のデータベース名と一致させる必要があります。
+      POSTGRES_DB: tododb
+    # データを永続化するための設定です。
+    # "db-data" という名前付きボリュームを、コンテナ内のPostgreSQLのデータディレクトリ (/var/lib/postgresql/data) にマウントします。
+    # これにより、コンテナを削除してもデータベースのデータは保持されます。
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    # このサービスが接続するネットワークを指定します。
+    networks:
+      - todo-app-network
+    # コンテナのヘルスチェック（正常性確認）設定です。
+    # これにより、データベースが完全に起動し、接続可能な状態になるまで、
+    # このdbサービスに依存する他のサービス（例: backend）の起動を待機させることができます。
+    healthcheck:
+      # ヘルスチェックに使用するコマンドを指定します。
+      # pg_isreadyコマンドは、PostgreSQLサーバーが接続を受け付けているかを確認します。
+      # -U user でユーザー名を、-d tododb でデータベース名を指定しています。
+      test: ["CMD-SHELL", "pg_isready -U user -d tododb"]
+      # ヘルスチェックを実行する間隔を指定します (例: 10秒ごと)。
+      interval: 10s
+      # ヘルスチェックコマンドのタイムアウト時間を指定します (例: 5秒)。
+      timeout: 5s
+      # ヘルスチェックが失敗した場合にリトライする回数を指定します (例: 5回)。
+      retries: 5
+
+# 名前付きボリュームを定義します。
+# ボリュームは、Dockerコンテナのデータを永続化するために使用されます。
+volumes:
+  # "db" サービスで使用する "db-data" という名前のボリュームを定義します。
+  # このボリュームにデータベースのデータが保存され、コンテナが再作成されてもデータは失われません。
+  db-data:
+
+# カスタムネットワークを定義します。
+# これにより、各サービス（コンテナ）が同じネットワーク上で互いに通信できるようになります。
+networks:
+  # "todo-app-network" という名前のカスタムネットワークを定義します。
+  todo-app-network:
+    # 使用するネットワークドライバーの種類を指定します。
+    # "bridge" は、Dockerホスト上に新しいプライベートネットワークを作成するデフォルトのドライバーです。
+    driver: bridge
