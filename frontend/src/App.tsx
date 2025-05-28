@@ -106,6 +106,40 @@ function App() {
   }
   // --- ▲▲▲ 新しいTODOを追加する処理 ▲▲▲ ---
 
+  // --- ▼▼▼ TODOの完了状態を切り替える処理 ▼▼▼ ---
+  const handleToggleComplete = async (id : number, currentCompletedStatus : boolean) : Promise<void> => {
+    const newCompleteState = !currentCompletedStatus;
+
+    try {
+      const todoToUpdate = todos.find(todo => todo.id === id);
+      if ( !todoToUpdate ) {
+        console.error('更新対象のTODOが見つかりません。ID:', id)
+        setError('更新対象のTODOが見つかりませんでした。');
+        return;
+      }
+
+      const updatedTodoData = { ...todoToUpdate, completed : newCompleteState };
+      const response = await axios.put<Todo>(`${ API_BASE_URL }/${ id }`, updatedTodoData);
+      setTodos(prevTodos =>
+        prevTodos.map(todo =>
+          todo.id === id ? response.data : todo
+        )
+      );
+      // エラーがあればリセット
+      if ( error ) setError(null);
+    } catch ( err ) {
+      // (4) エラーハンドリング
+      if ( axios.isAxiosError(err) ) {
+        setError(`TODOの更新に失敗しました: ${ err.message }`);
+        console.error('Axios error updating todo:', err.response?.data || err.message);
+      } else {
+        setError('TODOの更新中に予期せぬエラーが発生しました。');
+        console.error('Unexpected error updating todo:', err);
+      }
+      // エラーが発生した場合、既存のエラー表示ロジックでメッセージが表示される
+    }
+  }
+
   // --- レンダリングロジック ---
 
   if ( loading ) {
@@ -200,7 +234,7 @@ function App() {
                     <input
                       type="checkbox"
                       checked={ todo.completed }
-                      readOnly // 今は表示のみ
+                      onChange={ () => handleToggleComplete(todo.id, todo.completed) } // (5) onChangeイベントハンドラを追加
                       className="form-checkbox h-5 w-5 text-blue-600 dark:text-blue-400 rounded border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 focus:ring-blue-500 dark:focus:ring-blue-400 transition duration-150 ease-in-out mr-3"
                     />
                     <span
