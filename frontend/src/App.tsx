@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 // TODOアイテムの型を定義 (バックエンドのTodoエンティティと合わせる)
@@ -20,6 +20,8 @@ function App() {
   const [ error, setError ] = useState<string | null>(null);
   // 現在のテーマの状態 (ライトモードまたはダークモード)
   const [ theme, setTheme ] = useState<'light' | 'dark'>('light');
+  // 新しいTodo
+  const [ newTodoTitle, setNewTodoTitle ] = useState<string>('');
 
   // --- 副作用フック (useEffect) ---
 
@@ -30,8 +32,8 @@ function App() {
       setTheme(savedTheme);
     } else {
       // オプション: OSのテーマ設定を初期値として尊重する場合
-      // const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      // setTheme(prefersDark ? 'dark' : 'light');
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setTheme(prefersDark ? 'dark' : 'light');
     }
   }, []); // 空の依存配列なので、マウント時に1回だけ実行
 
@@ -75,6 +77,34 @@ function App() {
   const toggleTheme = () => {
     setTheme(prevTheme => ( prevTheme === 'light' ? 'dark' : 'light' ));
   };
+
+  // --- ▼▼▼ 新しいTODOを追加する処理 ▼▼▼ ---
+  const handleAddTodo = async (event : React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault(); //
+    if ( !newTodoTitle.trim() ) {
+      alert("TODOのタイトルを入力してください。");
+      return;
+    }
+
+    // バックエンドAPIにPOSTリクエストを送信して新しいTODOを作成
+    try {
+      const response = await axios.post<Todo>(API_BASE_URL, {
+        title : newTodoTitle,
+        completed : false
+      })
+      setTodos(prevTodos => [ ...prevTodos, response.data ]);
+      setNewTodoTitle('');
+    } catch ( err ) {
+      if ( axios.isAxiosError(err) ) {
+        setError(`TODOの追加に失敗しました：${ err.message }`);
+        console.error("バックエンドAPIにPOSTリクエストを送信して新しいTODOを作成")
+      } else {
+        setError('TODOの追加中に予期せぬエラーが発生しました。');
+        console.error('Unexpected error adding todo:', err)
+      }
+    }
+  }
+  // --- ▲▲▲ 新しいTODOを追加する処理 ▲▲▲ ---
 
   // --- レンダリングロジック ---
 
@@ -129,6 +159,23 @@ function App() {
             ) }
           </button>
         </header>
+
+        {/* --- ▼▼▼ TODO追加フォーム ▼▼▼ --- */ }
+        <form onSubmit={ handleAddTodo } className="mb-8 flex gap-3">
+          <input
+            type='text'
+            value={ newTodoTitle }
+            onChange={ (e) => setNewTodoTitle(e.target.value) }
+            placeholder="新しいTODOを入力..."
+            className="flex-grow p-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none transition-colors duration-200"
+          />
+          <button
+            type="submit"
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900 focus:ring-offset-2 transition-colors duration-200"
+          >
+            追加
+          </button>
+        </form>
 
         {/* TODOリスト */ }
         <main>
