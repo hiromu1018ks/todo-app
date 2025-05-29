@@ -3,9 +3,22 @@ import TodoList from "./components/TodoList.tsx";
 import useTheme from "./hooks/useTheme";
 import useTodos, { API_BASE_URL } from "./hooks/useTodos";
 
+/**
+ * アプリケーションのメインコンポーネント
+ * TO-DOリストの表示、追加、完了状態の切り替え、削除の機能を提供します
+ * ダークモード/ライトモードの切り替え機能も含まれています
+ */
 function App() {
-  // カスタムフックを使用してテーマと Todo 関連の状態・ロジックを管理
+  // カスタムフックを使用してテーマ（ダークモード/ライトモード）の状態と切り替え機能を取得
   const { theme, toggleTheme } = useTheme();
+
+  // カスタムフックを使用してTO-DOリストの状態と操作関数を取得
+  // todos: TO-DOアイテムの配列
+  // loading: データ読み込み中かどうかを示すフラグ
+  // error: エラーメッセージ（エラーがない場合はnull）
+  // addTodo: 新しいTO-DOを追加する関数
+  // toggleTodoComplete: TO-DOの完了状態を切り替える関数
+  // deleteTodo: TO-DOを削除する関数
   const { todos, loading, error, addTodo, toggleTodoComplete, deleteTodo } = useTodos();
 
 
