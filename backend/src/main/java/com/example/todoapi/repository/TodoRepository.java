@@ -5,28 +5,26 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 /**
- * {@link Todo} エンティティのためのデータアクセスレイヤ（リポジトリ）です。
- * このインターフェースは Spring Data JPA の {@link JpaRepository} を拡張しており、
- * {@link Todo} エンティティに対する基本的なCRUD（作成、読み取り、更新、削除）操作を
+ * Todoデータをデータベースに保存したり取得したりするためのインターフェースです。
+ * このインターフェースは、Spring Data JPAというライブラリの機能を利用して、
+ * データベース操作のための基本的なメソッド（作成、読み取り、更新、削除）を
  * 自動的に提供します。
- *
- * {@code @Repository} アノテーションは、このインターフェースが Spring のコンポーネントであり、
- * データアクセス関連の例外を Spring の統一的な例外階層に変換する役割を持つことを示します。
  */
-@Repository
+@Repository // このアノテーションは、このインターフェースがデータベースとのやり取りを担当することを示します
 public interface TodoRepository extends JpaRepository<Todo, Long> {
-    // JpaRepository<Todo, Long> を継承することで、以下のようなメソッドが自動的に利用可能になります。
-    // - save(Todo entity): エンティティを保存または更新します。
-    // - findById(Long id): 指定されたIDのエンティティを検索します。
-    // - findAll(): 全てのエンティティを検索します。
-    // - deleteById(Long id): 指定されたIDのエンティティを削除します。
-    // - count(): エンティティの総数を取得します。
-    // その他多数のメソッドが提供されます。
+    // JpaRepositoryを継承することで、以下のようなメソッドが自動的に使えるようになります：
+    //
+    // - save(Todo todo): Todoを保存または更新します
+    // - findById(Long id): 指定されたIDのTodoを検索します
+    // - findAll(): 全てのTodoを検索します
+    // - deleteById(Long id): 指定されたIDのTodoを削除します
+    // - count(): Todoの総数を取得します
+    //
+    // これらのメソッドは自動的に提供されるため、自分で実装する必要はありません。
+    // Springが自動的にデータベース操作のコードを生成してくれます。
 
-    // ここに、JpaRepository が提供する標準的なメソッド以外に、
-    // カスタムのクエリメソッドを定義することも可能です。
-    // 例えば、完了済みのTodoアイテムのみを検索するメソッドや、
-    // 特定のキーワードを含むタイトルを持つTodoアイテムを検索するメソッドなどです。
-    // メソッド名は命名規則に従うことで、Spring Data JPA が自動的にクエリを生成します。
+    // 必要に応じて、ここに独自のメソッドを追加することもできます。
+    // 例えば、完了済みのTodoだけを取得するメソッドや、
+    // タイトルに特定の単語を含むTodoを検索するメソッドなどです。
     // 例: List<Todo> findByCompleted(boolean completed);
 }
