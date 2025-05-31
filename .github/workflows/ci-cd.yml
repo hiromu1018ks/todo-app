@@ -68,6 +68,46 @@ jobs:
           echo "Pushing Docker image with latest tag: ${{ steps.build-backend-image.outputs.image_pushed_with_latest_tag }}"
           docker push "${{ steps.build-backend-image.outputs.image_pushed_with_latest_tag }}"
 
+      - name: Set up Node.js for Frontend Build
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # frontend/package.json で推奨されるNode.jsバージョンに合わせてください
+          cache: 'npm' # npmのキャッシュを有効にする (作業ディレクトリも指定するとより良い: cache-dependency-path: frontend/package-lock.json)
+          cache-dependency-path: frontend/package-lock.json # frontend/package-lock.json のパス
+
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend # frontendディレクトリでコマンドを実行
+        run: npm ci # package-lock.json に基づいて厳密にインストール (CI環境で推奨)
+        # もし npm install を使っている場合はそれでもOK
+
+      - name: Build Frontend Application
+        working-directory: ./frontend
+        run: npm run build # package.json の build スクリプトを実行
+
+      - name: Build and tag Frontend Docker image
+        id: build-frontend-image
+        run: |
+          TARGET_IMAGE_SHA_TAG="${{ env.ECR_REPOSITORY_FRONTEND_URI }}:${{ env.IMAGE_TAG }}"
+          TARGET_IMAGE_LATEST_TAG="${{ env.ECR_REPOSITORY_FRONTEND_URI }}:latest"
+
+          echo "Building Frontend Docker image and tagging as $TARGET_IMAGE_SHA_TAG"
+          # frontendディレクトリのDockerfileを指定
+          docker build -t "$TARGET_IMAGE_SHA_TAG" ./frontend 
+          
+          echo "Additionally tagging Frontend image as $TARGET_IMAGE_LATEST_TAG"
+          docker tag "$TARGET_IMAGE_SHA_TAG" "$TARGET_IMAGE_LATEST_TAG"
+          
+          echo "frontend_image_sha_tag=$TARGET_IMAGE_SHA_TAG" >> $GITHUB_OUTPUT
+          echo "frontend_image_latest_tag=$TARGET_IMAGE_LATEST_TAG" >> $GITHUB_OUTPUT
+
+      - name: Push Frontend Docker image to ECR
+        run: |
+          echo "Pushing Frontend Docker image with SHA tag: ${{ steps.build-frontend-image.outputs.frontend_image_sha_tag }}"
+          docker push "${{ steps.build-frontend-image.outputs.frontend_image_sha_tag }}"
+
+          echo "Pushing Frontend Docker image with latest tag: ${{ steps.build-frontend-image.outputs.frontend_image_latest_tag }}"
+          docker push "${{ steps.build-frontend-image.outputs.frontend_image_latest_tag }}"
+
       # Verify ECR Login ステップは、ECRログイン直後に移動するか、このままでも問題ありません。
       # 今回はユーザーのコードに合わせて最後に残しています。
       - name: Verify ECR Login
