@@ -7,11 +7,13 @@ on:
 
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
-  # ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+  ECR_REPOSITORY_BACKEND_URI: ${{ secrets.ECR_REPOSITORY_BACKEND_URI }} # GitHub Secret名と一致させる
+  ECR_REPOSITORY_FRONTEND_URI: ${{ secrets.ECR_REPOSITORY_FRONTEND_URI }} # GitHub Secret名と一致させる
+  IMAGE_TAG: ${{ github.sha }}
 
 jobs:
-  authenticate_and_login:
-    name: Authenticate with AWS and Login to ECR
+  build_and_push_backend: # ジョブ名をバックエンド処理に特化
+    name: Build Backend and Push to ECR
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -31,6 +33,43 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Set up JDK for Backend Build
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build Backend with Maven
+        run: ./backend/mvnw -f backend/pom.xml clean package -DskipTests # backendディレクトリにmvnwがある前提
+
+      - name: Build and tag Backend Docker image
+        id: build-backend-image # ステップIDを修正 (ユーザー提示コードに合わせる)
+        run: |
+          # ECRリポジトリURI (env.ECR_REPOSITORY_BACKEND_URI) とタグ (env.IMAGE_TAG) を結合
+          TARGET_IMAGE_SHA_TAG="${{ env.ECR_REPOSITORY_BACKEND_URI }}:${{ env.IMAGE_TAG }}"
+          TARGET_IMAGE_LATEST_TAG="${{ env.ECR_REPOSITORY_BACKEND_URI }}:latest"
+
+          echo "Building Docker image and tagging as $TARGET_IMAGE_SHA_TAG"
+          docker build -t "$TARGET_IMAGE_SHA_TAG" ./backend # Dockerfileは backend/Dockerfile にある前提
+          
+          echo "Additionally tagging as $TARGET_IMAGE_LATEST_TAG"
+          docker tag "$TARGET_IMAGE_SHA_TAG" "$TARGET_IMAGE_LATEST_TAG"
+          
+          # 次のステップで使うために出力
+          echo "image_pushed_with_sha_tag=$TARGET_IMAGE_SHA_TAG" >> $GITHUB_OUTPUT
+          echo "image_pushed_with_latest_tag=$TARGET_IMAGE_LATEST_TAG" >> $GITHUB_OUTPUT
+
+      - name: Push Backend Docker image to ECR
+        run: |
+          # 前のステップの出力を利用
+          echo "Pushing Docker image with SHA tag: ${{ steps.build-backend-image.outputs.image_pushed_with_sha_tag }}"
+          docker push "${{ steps.build-backend-image.outputs.image_pushed_with_sha_tag }}"
+          
+          echo "Pushing Docker image with latest tag: ${{ steps.build-backend-image.outputs.image_pushed_with_latest_tag }}"
+          docker push "${{ steps.build-backend-image.outputs.image_pushed_with_latest_tag }}"
+
+      # Verify ECR Login ステップは、ECRログイン直後に移動するか、このままでも問題ありません。
+      # 今回はユーザーのコードに合わせて最後に残しています。
       - name: Verify ECR Login
         if: steps.login-ecr.outputs.registry
         run: |
