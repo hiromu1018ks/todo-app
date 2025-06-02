@@ -18,7 +18,7 @@ import java.util.Optional;
  */
 @RestController // このアノテーションは、このクラスがRESTful APIのコントローラーであることを示します。メソッドの戻り値がそのままレスポンスのデータになります。
 @RequestMapping("/api/todos") // このアノテーションは、このコントローラーのURLの共通部分を指定します。例：「/api/todos」で始まるURLはこのコントローラーが処理します。
-@CrossOrigin(origins = "*") // このアノテーションは、異なるドメイン（例：フロントエンドが別サーバーにある場合）からのアクセスを許可します。
+//@CrossOrigin(origins = "*") // このアノテーションは、異なるドメイン（例：フロントエンドが別サーバーにある場合）からのアクセスを許可します。
 @RequiredArgsConstructor // このLombokアノテーションは、finalフィールドを引数に持つコンストラクタを自動生成します。
 public class TodoController {
 

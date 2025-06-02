@@ -33,22 +33,29 @@ interface TodoListProps {
 const TodoList : React.FC<TodoListProps> = ({ todos, onToggleComplete, onDeleteTodo }) => {
   if ( todos.length === 0 ) {
     return (
-      <div className="text-center py-10">
-        <p className="text-lg text-gray-500 dark:text-gray-400">素晴らしい！TODOは全て完了しています。</p>
+      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-10 shadow-lg text-center">
+        <svg className="w-16 h-16 mx-auto mb-4 text-green-500 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p className="text-xl font-medium text-gray-700 dark:text-gray-300">素晴らしい！</p>
+        <p className="text-lg text-gray-500 dark:text-gray-400 mt-2">TODOは全て完了しています。</p>
       </div>
     )
   }
 
   return (
-    <ul className="space-y-4">
-      { todos.map(todo => (
-        <TodoItem
-          todo={ todo }
-          onToggleComplete={ onToggleComplete }
-          onDeleteTodo={ onDeleteTodo }
-        />
-      )) }
-    </ul>
+    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-6 shadow-lg">
+      <ul className="space-y-5">
+        { todos.map(todo => (
+          <TodoItem
+            key={ todo.id }
+            todo={ todo }
+            onToggleComplete={ onToggleComplete }
+            onDeleteTodo={ onDeleteTodo }
+          />
+        )) }
+      </ul>
+    </div>
   )
 }
 

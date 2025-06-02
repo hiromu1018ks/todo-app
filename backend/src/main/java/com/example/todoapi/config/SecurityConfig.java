@@ -3,6 +3,7 @@ package com.example.todoapi.config;
 import com.example.todoapi.security.jwt.AuthTokenFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -14,6 +15,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
 
 /**
  * Spring Securityの設定クラスです。
@@ -62,6 +68,20 @@ public class SecurityConfig {
         return authConfig.getAuthenticationManager();
     }
 
+    @Bean // (2) CORS設定をBeanとして定義
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173")); // (3) フロントエンドのオリジンを許可
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")); // (4) 許可するHTTPメソッド
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept")); // (5) 許可するヘッダー
+        configuration.setAllowCredentials(true); // (6) Cookieなどの認証情報を許可する場合 (今回はJWTなので必須ではないが、設定しておいても良い)
+        configuration.setMaxAge(3600L); // (7) プリフライトリクエストの結果をキャッシュする時間 (秒)
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration); // (8) 全てのパスに対してこのCORS設定を適用
+        return source;
+    }
+
     /**
      * セキュリティフィルターチェーンをSpringのBeanとして登録します。
      * HTTPリクエストに対するセキュリティ設定（CSRF対策、認可ルールなど）を定義します。
@@ -73,22 +93,13 @@ public class SecurityConfig {
     @Bean // このメソッドが返すオブジェクトをSpringのBeanとして登録します。
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // CSRF（クロスサイトリクエストフォージェリ）保護を無効にします。
-                // ステートレスなAPI（例: JWTを使用する場合）では一般的に無効化されます。
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
-                // セッション管理の設定を行います。
-                // STATELESS: セッションを作成せず、既存のセッションも使用しないステートレスな設定です。
-                // JWTを使用する場合は通常このモードを使用します。
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // HTTPリクエストに対する認可ルールを設定します。
                 .authorizeHttpRequests(auth -> auth
-                        // "/api/auth/**"のパスパターンに一致するリクエストは、認証なしで全て許可します。
-                        // 主に認証（ログイン、登録など）関連のエンドポイントに使用されます。
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // ★★★ この行を追加 ★★★
                         .requestMatchers("/api/auth/**").permitAll()
-                        // "/api/todos/**"のパスパターンに一致するリクエストは、認証が必要です。
-                        // TO-DOアイテム関連のエンドポイントにはユーザー認証が必要となります。
                         .requestMatchers("/api/todos/**").authenticated()
-                        // その他すべてのリクエストも認証が必要です。
                         .anyRequest().authenticated()
                 );
 

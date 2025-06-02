@@ -14,7 +14,7 @@ interface AddTodoFormProps {
  * 新しいTO-DOを追加するためのフォームコンポーネント
  * テキスト入力フィールドと追加ボタンを表示します
  */
-const AddTodoForm : React.FC<AddTodoFormProps> = ({ onAddTodo, currentTheme }) => {
+const AddTodoForm : React.FC<AddTodoFormProps> = ({ onAddTodo, currentTheme = 'light' }) => {
   // 新しいTO-DOのタイトルを保持するための状態
   const [ newTodoTitle, setNewTodoTitle ] = useState<string>('');
 
@@ -39,28 +39,28 @@ const AddTodoForm : React.FC<AddTodoFormProps> = ({ onAddTodo, currentTheme }) =
   // - テキスト入力フィールドと送信ボタンを表示
   // - テーマに応じてスタイルが変わる
   return (
-    <form onSubmit={ handleSubmit } className='mb-8 flex gap-3'>
+    <form onSubmit={ handleSubmit } className='mb-8 flex gap-4'>
       {/* テキスト入力フィールド - 入力値はnewTodoTitle状態と連動 */ }
       <input
         type='text'
         value={ newTodoTitle }
         onChange={ (e) => setNewTodoTitle(e.target.value) }
         placeholder="新しいTODOを入力..."
-        className={ `flex-grow p-3 border rounded-lg shadow-sm 
-                    focus:ring-2 focus:border-transparent outline-none transition-colors duration-200
+        className={ `flex-grow p-4 border-2 rounded-xl shadow-md 
+                    focus:ring-2 focus:border-transparent outline-none transition-all duration-300
                     ${ currentTheme === 'dark'
-          ? 'border-gray-600 bg-gray-800 text-gray-100 placeholder-gray-500 focus:ring-blue-400' // ダークモード時のスタイル
-          : 'border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:ring-blue-500' // ライトモード時のスタイル
+          ? 'border-gray-600 bg-gray-800 text-gray-100 placeholder-gray-500 focus:ring-blue-400 focus:shadow-lg focus:shadow-blue-500/20' // ダークモード時のスタイル
+          : 'border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:ring-blue-500 focus:shadow-lg focus:shadow-blue-500/20' // ライトモード時のスタイル
         }` }
       />
       {/* 送信ボタン - クリックするとフォームが送信される */ }
       <button
         type="submit"
-        className={ `px-6 py-3 font-semibold rounded-lg shadow-md 
-                   focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200
+        className={ `px-6 py-4 font-bold rounded-xl shadow-lg transform hover:scale-[1.02] hover:shadow-xl
+                   focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-300
                    ${ currentTheme === 'dark'
-          ? 'bg-blue-500 hover:bg-blue-600 text-white focus:ring-blue-500 focus:ring-offset-gray-900' // ダークモード時のスタイル
-          : 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-600 focus:ring-offset-gray-100' // ライトモード時のスタイル
+          ? 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white focus:ring-blue-500 focus:ring-offset-gray-900' // ダークモード時のスタイル
+          : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white focus:ring-blue-600 focus:ring-offset-gray-100' // ライトモード時のスタイル
         }` }
       >
         追加

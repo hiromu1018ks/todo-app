@@ -33,25 +33,36 @@ const TodoItem : React.FC<TodoItemProps> = ({ todo, onToggleComplete, onDeleteTo
   return (
     // TO-DOアイテムのコンテナ - 完了状態に応じて背景色と左ボーダーの色が変わります
     <li
-      className={ `p-4 rounded-lg shadow-lg flex justify-between items-center transition-all duration-300 ease-in-out transform hover:scale-105 group ${
+      className={ `p-5 rounded-xl shadow-xl flex justify-between items-center transition-all duration-300 ease-in-out transform hover:scale-[1.02] hover:shadow-2xl group mb-2 ${
         todo.completed
-          ? 'bg-green-100 dark:bg-green-900/50 border-l-4 border-green-500 dark:border-green-600' // 完了時のスタイル（緑色）
-          : 'bg-white dark:bg-gray-800 border-l-4 border-blue-500 dark:border-blue-600' // 未完了時のスタイル（青色）
+          ? 'bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/40 border-l-4 border-green-500 dark:border-green-600' // 完了時のスタイル（緑色）
+          : 'bg-gradient-to-r from-white to-blue-50 dark:from-gray-800 dark:to-gray-700 border-l-4 border-blue-500 dark:border-blue-600' // 未完了時のスタイル（青色）
       }` }
     >
       {/* 左側：チェックボックスとTO-DOタイトル */ }
       <div className="flex items-center flex-grow">
         {/* 完了状態を切り替えるチェックボックス */ }
-        <input
-          type="checkbox"
-          checked={ todo.completed }
-          onChange={ () => onToggleComplete(todo.id, todo.completed) }
-          className="form-checkbox h-5 w-5 text-blue-600 dark:text-blue-400 rounded border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 focus:ring-blue-500 dark:focus:ring-blue-400 transition duration-150 ease-in-out mr-3 cursor-pointer"
-        />
+        <div className="relative mr-4">
+          <input
+            type="checkbox"
+            checked={ todo.completed }
+            onChange={ () => onToggleComplete(todo.id, todo.completed) }
+            className="form-checkbox h-6 w-6 text-blue-600 dark:text-blue-400 rounded-md border-2 border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition duration-200 ease-in-out cursor-pointer"
+          />
+          {todo.completed && (
+            <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <svg className="h-4 w-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            </span>
+          )}
+        </div>
         {/* TO-DOのタイトル - 完了時は取り消し線が表示されます */ }
         <span
-          className={ `text-lg font-medium ${
-            todo.completed ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-800 dark:text-gray-100'
+          className={ `text-lg font-medium transition-all duration-200 ${
+            todo.completed 
+              ? 'line-through text-gray-500 dark:text-gray-400' 
+              : 'text-gray-800 dark:text-gray-100'
           }` }
         >
           { todo.title }
@@ -59,13 +70,13 @@ const TodoItem : React.FC<TodoItemProps> = ({ todo, onToggleComplete, onDeleteTo
       </div>
 
       {/* 右側：ステータスバッジと削除ボタン */ }
-      <div className="flex items-center space-x-2 ml-2 flex-shrink-0">
+      <div className="flex items-center space-x-3 ml-2 flex-shrink-0">
         {/* 完了状態を示すバッジ - 完了時は緑、未完了時は黄色 */ }
         <span
-          className={ `px-3 py-1 text-xs font-semibold rounded-full ${
+          className={ `px-3 py-1.5 text-xs font-bold rounded-full shadow-sm transition-all duration-200 ${
             todo.completed
-              ? 'bg-green-200 text-green-800 dark:bg-green-700 dark:text-green-100' // 完了時のスタイル
-              : 'bg-yellow-200 text-yellow-800 dark:bg-yellow-600 dark:text-yellow-100' // 未完了時のスタイル
+              ? 'bg-gradient-to-r from-green-300 to-green-400 text-green-900 dark:from-green-600 dark:to-green-700 dark:text-green-50' // 完了時のスタイル
+              : 'bg-gradient-to-r from-yellow-300 to-amber-300 text-amber-900 dark:from-yellow-500 dark:to-amber-500 dark:text-amber-50' // 未完了時のスタイル
           }` }
         >
           { todo.completed ? '完了' : '作業中' }
@@ -74,7 +85,7 @@ const TodoItem : React.FC<TodoItemProps> = ({ todo, onToggleComplete, onDeleteTo
         <button
           onClick={ () => onDeleteTodo(todo.id) }
           aria-label={ `${ todo.title } を削除` }
-          className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-500 dark:focus:ring-red-400 rounded-full transition-colors duration-200 opacity-0 group-hover:opacity-100"
+          className="p-2 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-red-100 dark:hover:bg-red-900/50 hover:text-red-600 dark:hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-500 dark:focus:ring-red-400 rounded-full shadow-sm transition-all duration-200 opacity-0 group-hover:opacity-100 transform group-hover:scale-110"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24"
                stroke="currentColor" strokeWidth={ 2 }>
